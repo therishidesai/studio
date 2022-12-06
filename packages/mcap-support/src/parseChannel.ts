@@ -14,6 +14,8 @@ import { parseJsonSchema } from "./parseJsonSchema";
 import { protobufDefinitionsToDatatypes, stripLeadingDot } from "./protobufDefinitionsToDatatypes";
 import { RosDatatypes } from "./types";
 
+import cbor from "cbor";
+
 type Channel = {
   messageEncoding: string;
   schema: { name: string; encoding: string; data: Uint8Array } | undefined;
@@ -49,7 +51,7 @@ function parsedDefinitionsToDatatypes(
  * - https://github.com/foxglove/mcap/blob/main/docs/specification/well-known-schema-encodings.md
  */
 export function parseChannel(channel: Channel): ParsedChannel {
-  if (channel.messageEncoding === "json") {
+  if (channel.messageEncoding === "json" || channel.messageEncoding === "cbor") {
     if (channel.schema?.encoding !== "jsonschema") {
       throw new Error(
         `Message encoding ${channel.messageEncoding} with ${
@@ -66,6 +68,17 @@ export function parseChannel(channel: Channel): ParsedChannel {
         : undefined;
     let datatypes: RosDatatypes = new Map();
     let deserializer = (data: ArrayBufferView) => JSON.parse(textDecoder.decode(data));
+    if (channel.messageEncoding === "cbor") {
+      deserializer = (data: ArrayBufferView) => cbor.decodeFirst(data, (error, obj) => {
+        if (error != null) {
+          throw new Error{
+            `Failed to decode cbor object ${obj}`
+          }
+        }
+
+        return obj;
+      });
+    }
     if (schema != undefined) {
       if (typeof schema !== "object") {
         throw new Error(`Invalid schema, expected JSON object, got ${typeof schema}`);
@@ -75,8 +88,21 @@ export function parseChannel(channel: Channel): ParsedChannel {
         channel.schema.name,
       );
       datatypes = parsedDatatypes;
-      deserializer = (data) =>
-        postprocessValue(JSON.parse(textDecoder.decode(data)) as Record<string, unknown>);
+      if (channel.messageEncoding === "cbor") {
+        deserializer = (data) =>
+          postprocessValue(cbor.decodeFirst(data. (error, obj) => {
+            if (error != null) {
+              throw new Error{
+                `Failed to decode cbor object ${obj}`
+              }
+            }
+
+            return obj as Record<string, unknown>;
+          }));
+      } else {
+        deserializer = (data) =>
+          postprocessValue(JSON.parse(textDecoder.decode(data)) as Record<string, unknown>);
+      }
     }
     return { fullSchemaName: channel.schema.name, deserializer, datatypes };
   }
