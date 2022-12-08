@@ -122,5 +122,8 @@
     "webpack-dev-server": "4.11.0",
     "webpack-hot-middleware": "2.25.2"
   },
-  "packageManager": "yarn@3.1.0"
+  "packageManager": "yarn@3.1.0",
+  "dependencies": {
+    "cbor-js": "0.1.0"
+  }
 }

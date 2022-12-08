@@ -14,7 +14,7 @@ import { parseJsonSchema } from "./parseJsonSchema";
 import { protobufDefinitionsToDatatypes, stripLeadingDot } from "./protobufDefinitionsToDatatypes";
 import { RosDatatypes } from "./types";
 
-import cbor from "cbor";
+var CBOR = require("cbor-js");
 
 type Channel = {
   messageEncoding: string;
@@ -62,22 +62,20 @@ export function parseChannel(channel: Channel): ParsedChannel {
       );
     }
     const textDecoder = new TextDecoder();
+    console.log(textDecoder.decode(channel.schema.data));
     const schema =
       channel.schema.data.length > 0
         ? JSON.parse(textDecoder.decode(channel.schema.data))
         : undefined;
+    console.log("Done parsing schema!!!!!!");
     let datatypes: RosDatatypes = new Map();
     let deserializer = (data: ArrayBufferView) => JSON.parse(textDecoder.decode(data));
     if (channel.messageEncoding === "cbor") {
-      deserializer = (data: ArrayBufferView) => cbor.decodeFirst(data, (error, obj) => {
-        if (error != null) {
-          throw new Error{
-            `Failed to decode cbor object ${obj}`
-          }
-        }
-
-        return obj;
-      });
+      deserializer = (data: ArrayBufferView) => {
+        console.log("NO SCHEMA: Deserialize data");
+        console.log(CBOR.decode(data.buffer));
+        return CBOR.decode(data.buffer);
+      }
     }
     if (schema != undefined) {
       if (typeof schema !== "object") {
@@ -89,16 +87,11 @@ export function parseChannel(channel: Channel): ParsedChannel {
       );
       datatypes = parsedDatatypes;
       if (channel.messageEncoding === "cbor") {
-        deserializer = (data) =>
-          postprocessValue(cbor.decodeFirst(data. (error, obj) => {
-            if (error != null) {
-              throw new Error{
-                `Failed to decode cbor object ${obj}`
-              }
-            }
-
-            return obj as Record<string, unknown>;
-          }));
+        deserializer = (data) => {
+          console.log("Deserialize data");
+          console.log(CBOR.decode(data.buffer));
+          return postprocessValue(CBOR.decode(data.buffer) as Record<string, unknown>);
+        };
       } else {
         deserializer = (data) =>
           postprocessValue(JSON.parse(textDecoder.decode(data)) as Record<string, unknown>);

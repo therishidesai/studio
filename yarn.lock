@@ -8542,7 +8542,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cbor-js@npm:^0.1.0":
+"cbor-js@npm:0.1.0, cbor-js@npm:^0.1.0":
   version: 0.1.0
   resolution: "cbor-js@npm:0.1.0"
   checksum: 9267e1d1eda70d34994fec05bb1aa53541673276131ff776194ee7b41e4ee80aec8c5c33f3a1bea3d393f9724c4f46c217b89ee2bcff6e35de583f3c533050fd
@@ -12583,6 +12583,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": 5.36.1
     "@typescript-eslint/parser": 5.36.1
     babel-plugin-transform-import-meta: 2.1.1
+    cbor-js: 0.1.0
     cross-env: 7.0.3
     depcheck: 1.4.3
     electron: 19.1.8
